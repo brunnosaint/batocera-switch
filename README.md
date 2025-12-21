@@ -1,19 +1,16 @@
 # batocera-switch
 
-Esta versão do código requer um sistema de arquivos para os dados de usuário que suporte symlinks (EXT4, BTRFS) e é compatível apenas com x86_64!!
+This version of the code requires a file system for userdata that supports symlinking (EXT4, BTRFS) and is for x86_64 only!!  
 
-Esta versão integra o trabalho de ordovice, foclabroc, Batocera Nation e uureel. Não inclui as chaves BIOS.
+This version integrates work from ordovice, foclabroc, Batocera Nation, and uureel.  It does not include the bios keys.  
 
-INSTALAÇÃO FÁCIL
+## EASY INSTALL
+From a terminal window, run the following:<br>
+```curl -L bit.ly/foclabroc-switch-all | bash```  (all version)
 
-De uma janela de terminal, execute o seguinte:
-curl -L bit.ly/foclabroc-switch-all | bash (versão completa)
+After installing, place your prod.keys and title.keys in /share/bios/switch/  
+If you wish to use Ryujinx you will also need to supply the firmware zip file
 
-Após a instalação, coloque suas prod.keys e title.keys em /share/bios/switch/
-Se você desejar usar o Ryujinx, também será necessário fornecer o arquivo zip do firmware.
-
-AGRADECIMENTOS ESPECIAIS
-
-Agradecimentos especiais a foclabroc, Rion, Darknior e vários membros do Batocera Nation Discord
- pelos testes, especialmente durante a migração para SDL, [RGS] pela doação de um controle, e a todos que contribuem e me ajudam a melhorar isso.
+## SPECIAL THANKS
+Special thanks for foclabroc, Rion, and Darknior and multiple members of the [Batocera Nation Discord](https://discord.gg/cuw5Xt7M7d) for testing things especially with the migration to SDL, [RGS] for a controller donation, and anyone else who contributes and helps me make this better. 
 

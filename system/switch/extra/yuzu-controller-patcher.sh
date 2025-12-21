@@ -1,5 +1,5 @@
 #!/usr/bin/env bash 
-# Patch de controle para Yuzu no Batocera-Switch 
+# yuzu controller patcher for batocera-switch 
 #############################################
 clear 
 
@@ -9,57 +9,50 @@ X='\033[0m'
 
 
 echo -e "${R}---------${R}--------------------------------------------------"
-echo -e "${R}PATCH DE CONTROLE DO YUZU PARA BATOCERA-SWITCH:"
+echo -e "${R}YUZU CONTROLLER PATCHER FOR BATOCERA-SWITCH:"
 echo -e "${X}/userdata/system/switch/extra/yuzu-controller-patcher.sh"
 echo -e "${R}---------${R}--------------------------------------------------"
-echo -e "${R}COMO USAR: ${X}" 
-echo -e "${X}1  ${R}\ ${X}  ABRA O YUZU EM [F1 → APPS]"
-echo -e "${X}2  ${R}/ ${X}  SELECIONE SEU CONTROLE NA SEÇÃO DE DISPOSITIVOS DE ENTRADA"
-echo -e "${X}3  ${R}\ ${X}  APLIQUE / SALVE AS CONFIGURAÇÕES"
-echo -e "${X}4   ${R}>>${X}  ${X}EXECUTE ESTE SCRIPT" 
+echo -e "${R}HOW TO USE: ${X}" 
+echo -e "${X}1  ${R}\ ${X}  OPEN YUZU FROM [F1-APPS]"
+echo -e "${X}2  ${R}/ ${X}  SELECT YOUR CONTROLLER FROM THE INPUT DEVICES"
+echo -e "${X}3  ${R}\ ${X}  APPLY / SAVE"
+echo -e "${X}4   ${R}>>${X}  ${X}RUN THIS SCRIPT" 
 echo -e "${R}---------${R}--------------------------------------------------"
 echo
 echo
 echo
-# ID correto: 030000005e0400008e02000010010000
-# ID automático: 030081b85e0400008e02000010010000
+# proper id: 030000005e0400008e02000010010000
+# auto   id: 030081b85e0400008e02000010010000
 
-# Extrai o GUID do controle configurado no Yuzu
 id="$(cat /userdata/system/configs/yuzu/qt-config.ini | grep 'guid:' | head -n1 | sed 's,^.*guid:,,g' | cut -d "," -f1)"
 
-# Se não encontrar um ID válido, orienta o usuário
 if [[ "$id" = "" ]] || [[ "$id" = "0" ]]; then 
-	echo -e "${R} NÃO FOI POSSÍVEL ENCONTRAR O ID DO CONTROLE. VOCÊ PRECISA PRIMEIRO CONFIGURAR"
-	echo -e "${R} O CONTROLE EM F1 → APPS → YUZU"
+	echo -e "${R} COULDN'T FIND CONTROLLER ID, YOU NEED TO FIRST CONFIGURE "
+	echo -e "${R} THE CONTROLLER IN F1 -> APPS -> YUZU "
 	echo 
-	echo -e "${R} SELECIONE SEU CONTROLE NA SEÇÃO DE DISPOSITIVOS DE ENTRADA E SALVE"
+	echo -e "${R} SELECT YOUR CONTROLLER FROM THE INPUT DEVICES, SAVE "
 	echo
-	echo -e "${R} DEPOIS, EXECUTE ESTE SCRIPT NOVAMENTE"
+	echo -e "${R} THEN RUN THIS SCRIPT AGAIN "
 	echo
 	echo
 	exit 0
 fi
 
-# Se encontrou um ID válido, prossegue com o patch
 if [[ "$id" != "" ]] && [[ "$id" != "0" ]]; then
 
 	id=""$(echo $id)""
 	
-	# Linha atual no generator do Yuzu
 	genline=$(cat /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py | grep 'inputguid = controller.guid')
 	replace="$genline"
 	replaced=$(echo "$genline" | sed 's,^.*= ,,g')
-	# Valor antigo da linha
 	old=$(cat /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py | grep 'inputguid = "' | head -n1 | sed 's,^.* = ,,g')
-	# Novo valor que será inserido
 	new=\"$id\"
 	with="                inputguid = \"$id\""
     line="                inputguid = controller.guid"
 
-	# Se já está com o ID correto, informa que já está patchado
 	if [[ "$old" = "$new" ]]; then 
 		echo -e "${G}---------${G}--------------------------------------------------"
-		echo -e "${X}PRONTO! O GERADOR DO YUZU JÁ ESTÁ PATCHADO PARA USAR ESTE CONTROLE"
+		echo -e "${X}OK! YUZU GENERATOR IS PATCHED TO USE THIS CONTROLLER "
 		echo -e "${G}"$id""
 		echo -e "${G}---------${G}--------------------------------------------------"
 		echo
@@ -68,7 +61,6 @@ if [[ "$id" != "" ]] && [[ "$id" != "0" ]]; then
 		exit 0
 	fi
 
-	# Se ainda não está com o ID correto, faz a substituição
 	if [[ "$replace" != "$with" ]]; then 
 
 		sed -i "s/^.*inputguid = controller.guid/                inputguid = \"$id\"/g" /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py
@@ -76,12 +68,12 @@ if [[ "$id" != "" ]] && [[ "$id" != "0" ]]; then
 		echo -e "${X}---------${X}--------------------------------------------------"
 		echo -e "${X}---------${X}--------------------------------------------------"
 		echo
-		echo -e "${G}PRONTO! O GERADOR DO YUZU FOI PATCHADO ${X}"
+		echo -e "${G}OK! YUZU GENERATOR IS PATCHED ${X}"
 		echo 
-		echo -e "${X}SUBSTITUÍDO ${X}"
+		echo -e "${X}REPLACED ${X}"
 		echo -e "inputguid = $replaced"
 		echo
-		echo -e "${X}POR ${X}"
+		echo -e "${X}WITH ${X}"
 		echo -e "inputguid = \"$id\""
 		echo
 		echo -e "${X}---------${X}--------------------------------------------------"
@@ -93,3 +85,4 @@ if [[ "$id" != "" ]] && [[ "$id" != "0" ]]; then
 	fi
 
 fi
+

@@ -1,38 +1,38 @@
 #!/bin/bash
 
-# Detecção da versão principal do Batocera
+# Récupération de la version principale de Batocera
 version=$(batocera-es-swissknife --version | grep -oE '^[0-9]+')
 
-# Verifica se a versão foi detectada corretamente
+# Vérification que la version est bien un nombre
 if [[ -z "$version" ]]; then
-    dialog --msgbox "Não foi possível detectar uma versão válida do Batocera. Instalação cancelada." 8 60
+    dialog --msgbox "Impossible de détecter une version valide de Batocera. Installation annulée." 8 60
     clear
     exit 1
 fi
 
-echo "[Foclabroc Switch Installer] Versão detectada do Batocera: $version"
+echo "[Foclabroc Switch Installer] Version détectée de Batocera : $version"
 sleep 2
 
-# Escolhe o script correto conforme a versão
+# Choix du bon script selon la version
 case $version in
     39|40)
-        echo "[Foclabroc Switch Installer] Iniciando script para Batocera 39/40..."
+        echo "[Foclabroc Switch Installer] Déclenchement du script pour Batocera 39/40..."
         sleep 3
-        curl -fsSL https://raw.githubusercontent.com/brunnosaint/batocera-switch/refs/heads/main/system/switch/extra/batocera-switch-installer-v40.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/foclabroc/batocera-switch/refs/heads/main/system/switch/extra/batocera-switch-installer-v40.sh | bash
         ;;
     41)
-        echo "[Foclabroc Switch Installer] Iniciando script para Batocera 41..."
+        echo "[Foclabroc Switch Installer] Déclenchement du script pour Batocera 41..."
         sleep 3
-        curl -fsSL https://raw.githubusercontent.com/brunnosaint/batocera-switch/refs/heads/main/system/switch/extra/batocera-switch-installer.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/foclabroc/batocera-switch/refs/heads/main/system/switch/extra/batocera-switch-installer.sh | bash
         ;;
     42|43|44)
-        echo "[Foclabroc Switch Installer] Iniciando script para Batocera 42/43/44..."
+        echo "[Foclabroc Switch Installer] Déclenchement du script pour Batocera 42..."
         sleep 3
-        curl -fsSL https://raw.githubusercontent.com/brunnosaint/batocera-switch/refs/heads/42/system/switch/extra/batocera-switch-installer.sh | bash
+        curl -fsSL https://raw.githubusercontent.com/foclabroc/batocera-switch/refs/heads/42/system/switch/extra/batocera-switch-installer.sh | bash
         ;;
     *)
-        echo "[Foclabroc Switch Installer] Versão não suportada: $version"
-        dialog --msgbox "Versão do Batocera não suportada: $version. Instalação cancelada." 8 60
+        echo "[Foclabroc Switch Installer] Version non prise en charge : $version"
+        dialog --msgbox "Version de Batocera non prise en charge : $version. Installation annulée." 8 60
         clear
         ;;
 esac

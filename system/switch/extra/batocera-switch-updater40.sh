@@ -828,7 +828,7 @@ if [[ -e "$cfg" ]]; then
 #         fi
 #            link_ryujinxavalonia=$(echo "https://github.com/Ryujinx/release-channel-master/releases/download/$ryujinxavalonia_custom_version/test-ava-ryujinx-$ryujinx_custom_version-linux_x64.tar.gz")
 #                  if [[ "$(echo "$ryujinxavalonia_custom_version" | grep "382")" != "" ]]; then 
-#                     link_ryujinxavalonia=https://github.com/brunnosaint/batocera-switch/raw/main/switch/extra/test-ava-ryujinx-1.1.382-linux_x64.tar.gz
+#                     link_ryujinxavalonia=https://github.com/brunnosaint/batocera-switch/raw/refs/heads/main/system/switch/extra/test-ava-ryujinx-1.1.382-linux_x64.tar.gz
 #                  fi
 #       fi
    # ///
@@ -1511,7 +1511,7 @@ if [ -f "$link_ryujinxavalonia" ]; then
 		  cd $temp/$emu
 		  mv $link_ryujinxavalonia $temp/$emu/test-ava-ryujinx-1.1.1403-linux_x64.tar.gz 2>/dev/null
 		  wget -q --tries=10 --no-check-certificate --no-cache --no-cookies -O "$extra/$emu/xdg-mime" "https://github.com/brunnosaint/batocera-switch/raw/main/system/switch/extra/xdg-mime"
-		  ###curl -sSf "https://github.com/brunnosaint/batocera-switch/raw/main/system/switch/extra/xdg-mime" -o "$extra/$emu/xdg-mime"
+		  ###curl -sSf "https://github.com/brunnosaint/batocera-switch/raw/refs/heads/main/system/switch/extra/xdg-mime" -o "$extra/$emu/xdg-mime"
 		  chmod a+x "$extra/$emu/xdg-mime"
 		  #curl --progress-bar --remote-name --location $link_ryujinxavalonia
 		  LD_LIBRARY_PATH="/userdata/system/switch/extra:/usr/lib64:/usr/lib:/lib:${LD_LIBRARY_PATH}" $extra/batocera-switch-tar -xf $temp/$emu/*.tar.gz 2>/dev/null

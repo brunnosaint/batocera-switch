@@ -1,88 +1,195 @@
-#!/usr/bin/env bash 
-# yuzu controller patcher for batocera-switch 
-#############################################
-clear 
+#!/usr/bin/env bash
+# ============================================
+# YUZU CONTROLLER PATCHER FOR BATOCERA-SWITCH
+# ============================================
+# Este script atualiza o controlador padrão no gerador Yuzu
+# para usar o controlador configurado pelo usuário
+# ============================================
 
+clear
+
+# Cores para output
 G='\033[1;32m'
 R='\033[1;31m'
+Y='\033[1;33m'
 X='\033[0m'
+B='\033[1;34m'
 
+# Caminhos importantes
+YUZU_CONFIG="/userdata/system/configs/yuzu/qt-config.ini"
+YUZU_GENERATOR="/userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py"
+SCRIPT_PATH="/userdata/system/switch/extra/yuzu-controller-patcher.sh"
 
-echo -e "${R}---------${R}--------------------------------------------------"
-echo -e "${R}YUZU CONTROLLER PATCHER FOR BATOCERA-SWITCH:"
-echo -e "${X}/userdata/system/switch/extra/yuzu-controller-patcher.sh"
-echo -e "${R}---------${R}--------------------------------------------------"
-echo -e "${R}HOW TO USE: ${X}" 
-echo -e "${X}1  ${R}\ ${X}  OPEN YUZU FROM [F1-APPS]"
-echo -e "${X}2  ${R}/ ${X}  SELECT YOUR CONTROLLER FROM THE INPUT DEVICES"
-echo -e "${X}3  ${R}\ ${X}  APPLY / SAVE"
-echo -e "${X}4   ${R}>>${X}  ${X}RUN THIS SCRIPT" 
-echo -e "${R}---------${R}--------------------------------------------------"
-echo
-echo
-echo
-# proper id: 030000005e0400008e02000010010000
-# auto   id: 030081b85e0400008e02000010010000
+# Função para mostrar cabeçalho
+show_header() {
+    echo -e "${R}===================================================${X}"
+    echo -e "${R}    YUZU CONTROLLER PATCHER FOR BATOCERA-SWITCH    ${X}"
+    echo -e "${R}===================================================${X}"
+    echo -e "${X}Caminho do script: ${Y}$SCRIPT_PATH${X}"
+    echo -e "${R}---------------------------------------------------${X}"
+}
 
-id="$(cat /userdata/system/configs/yuzu/qt-config.ini | grep 'guid:' | head -n1 | sed 's,^.*guid:,,g' | cut -d "," -f1)"
+# Função para mostrar instruções
+show_instructions() {
+    echo -e "${Y}COMO USAR:${X}"
+    echo -e "${B}1.${X}  Abra o Yuzu em [F1] → [APPS]"
+    echo -e "${B}2.${X}  Vá em Emulation → Configure..."
+    echo -e "${B}3.${X}  Selecione 'Controls' na barra lateral"
+    echo -e "${B}4.${X}  Escolha seu controle nos dispositivos de entrada"
+    echo -e "${B}5.${X}  Configure os botões e clique em 'Apply'/'Save'"
+    echo -e "${B}6.${X}  Feche o Yuzu e execute este script"
+    echo -e "${R}---------------------------------------------------${X}"
+    echo
+}
 
-if [[ "$id" = "" ]] || [[ "$id" = "0" ]]; then 
-	echo -e "${R} COULDN'T FIND CONTROLLER ID, YOU NEED TO FIRST CONFIGURE "
-	echo -e "${R} THE CONTROLLER IN F1 -> APPS -> YUZU "
-	echo 
-	echo -e "${R} SELECT YOUR CONTROLLER FROM THE INPUT DEVICES, SAVE "
-	echo
-	echo -e "${R} THEN RUN THIS SCRIPT AGAIN "
-	echo
-	echo
-	exit 0
-fi
+# Função para extrair o GUID do controle
+extract_controller_guid() {
+    if [[ ! -f "$YUZU_CONFIG" ]]; then
+        echo -e "${R}ERRO: Arquivo de configuração do Yuzu não encontrado!${X}"
+        echo -e "${X}Caminho: $YUZU_CONFIG"
+        echo
+        return 1
+    fi
+    
+    # Extrair o primeiro GUID encontrado no arquivo de configuração
+    local guid=$(grep -m1 'guid:' "$YUZU_CONFIG" | sed 's/^.*guid://g' | cut -d "," -f1)
+    
+    # Limpar espaços em branco
+    guid=$(echo "$guid" | xargs)
+    
+    echo "$guid"
+}
 
-if [[ "$id" != "" ]] && [[ "$id" != "0" ]]; then
+# Função para verificar se o patcher já está aplicado
+is_already_patched() {
+    local current_guid="$1"
+    local patched_guid=$(grep -m1 'inputguid = "' "$YUZU_GENERATOR" 2>/dev/null | sed 's/^.*inputguid = "//g' | sed 's/"//g')
+    
+    if [[ "$patched_guid" == "$current_guid" ]] && [[ -n "$current_guid" ]]; then
+        return 0  # Já está patchado
+    else
+        return 1  # Precisa patchar
+    fi
+}
 
-	id=""$(echo $id)""
-	
-	genline=$(cat /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py | grep 'inputguid = controller.guid')
-	replace="$genline"
-	replaced=$(echo "$genline" | sed 's,^.*= ,,g')
-	old=$(cat /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py | grep 'inputguid = "' | head -n1 | sed 's,^.* = ,,g')
-	new=\"$id\"
-	with="                inputguid = \"$id\""
-    line="                inputguid = controller.guid"
+# Função principal
+main() {
+    show_header
+    show_instructions
+    
+    # Verificar se o Yuzu foi configurado
+    echo -e "${Y}Verificando configuração do Yuzu...${X}"
+    echo
+    
+    local controller_guid=$(extract_controller_guid)
+    
+    # Caso 1: Nenhum controle configurado
+    if [[ -z "$controller_guid" ]] || [[ "$controller_guid" == "0" ]]; then
+        echo -e "${R}❌ NENHUM CONTROLE CONFIGURADO ENCONTRADO!${X}"
+        echo
+        echo -e "${Y}Siga estes passos:${X}"
+        echo -e "1. Abra o Yuzu (F1 → APPS)"
+        echo -e "2. Vá em: Emulation → Configure..."
+        echo -e "3. Selecione 'Controls' na barra lateral"
+        echo -e "4. Escolha seu controle em 'Input Devices'"
+        echo -e "5. Configure os botões e clique em 'Apply'"
+        echo -e "6. Feche o Yuzu e execute este script novamente"
+        echo
+        echo -e "${R}Execute o script novamente após configurar o controle.${X}"
+        echo
+        exit 1
+    fi
+    
+    # Caso 2: Controle encontrado
+    echo -e "${G}✓ Controle encontrado!${X}"
+    echo -e "${B}GUID:${X} ${Y}$controller_guid${X}"
+    echo
+    
+    # Verificar se o gerador Yuzu existe
+    if [[ ! -f "$YUZU_GENERATOR" ]]; then
+        echo -e "${R}ERRO: Gerador Yuzu não encontrado!${X}"
+        echo -e "${X}Caminho: $YUZU_GENERATOR"
+        echo -e "${Y}Certifique-se de que o batocera-switch está instalado.${X}"
+        echo
+        exit 1
+    fi
+    
+    # Verificar se já está patchado
+    if is_already_patched "$controller_guid"; then
+        echo -e "${G}===================================================${X}"
+        echo -e "${G}✓ O GERADOR YUZU JÁ ESTÁ CONFIGURADO!${X}"
+        echo -e "${G}===================================================${X}"
+        echo
+        echo -e "${X}O controle já está definido como padrão no gerador."
+        echo -e "${Y}GUID configurado:${X} ${G}$controller_guid${X}"
+        echo
+        echo -e "${X}Nenhuma alteração necessária."
+        echo
+        exit 0
+    fi
+    
+    # Caso 3: Precisa aplicar o patch
+    echo -e "${Y}Aplicando patch no gerador Yuzu...${X}"
+    echo
+    
+    # Backup do arquivo original
+    backup_file="${YUZU_GENERATOR}.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$YUZU_GENERATOR" "$backup_file"
+    echo -e "${B}Backup criado:${X} ${Y}$backup_file${X}"
+    
+    # Aplicar o patch
+    local target_line="inputguid = controller.guid"
+    local replacement_line="                inputguid = \"$controller_guid\""
+    
+    # Contar quantas linhas serão modificadas
+    local match_count=$(grep -c "$target_line" "$YUZU_GENERATOR")
+    
+    if [[ $match_count -eq 0 ]]; then
+        echo -e "${R}AVISO: Linha de GUID não encontrada no gerador.${X}"
+        echo -e "${Y}O formato do arquivo pode ter mudado.${X}"
+        echo
+    fi
+    
+    # Aplicar a substituição
+    sed -i "s|^.*$target_line|$replacement_line|g" "$YUZU_GENERATOR"
+    
+    # Verificar se a alteração foi aplicada
+    if grep -q "inputguid = \"$controller_guid\"" "$YUZU_GENERATOR"; then
+        echo -e "${G}===================================================${X}"
+        echo -e "${G}✓ PATCH APLICADO COM SUCESSO!${X}"
+        echo -e "${G}===================================================${X}"
+        echo
+        echo -e "${X}${B}Alteração realizada:${X}"
+        echo -e "${Y}Antes:${X} inputguid = controller.guid (automático)"
+        echo -e "${Y}Depois:${X} inputguid = \"$controller_guid\" (seu controle)"
+        echo
+        echo -e "${B}GUID do controle:${X}"
+        echo -e "${G}$controller_guid${X}"
+        echo
+        echo -e "${Y}O gerador Yuzu agora usará este controle por padrão.${X}"
+        echo -e "${Y}Execute seus jogos normalmente pelo EmulationStation.${X}"
+        echo
+        echo -e "${B}Backup salvo em:${X} ${Y}$backup_file${X}"
+        echo -e "${B}(Você pode restaurar manualmente se necessário)${X}"
+        echo
+    else
+        echo -e "${R}❌ ERRO AO APLICAR O PATCH!${X}"
+        echo -e "${Y}Tentativa manual:${X}"
+        echo -e "1. Abra o arquivo: $YUZU_GENERATOR"
+        echo -e "2. Procure por: 'inputguid = controller.guid'"
+        echo -e "3. Substitua por: 'inputguid = \"$controller_guid\"'"
+        echo -e "4. Salve o arquivo"
+        echo
+        # Restaurar backup em caso de erro
+        mv "$backup_file" "$YUZU_GENERATOR"
+        echo -e "${Y}Backup restaurado devido ao erro.${X}"
+        exit 1
+    fi
+    
+    echo -e "${R}---------------------------------------------------${X}"
+    echo -e "${G}✓ Processo concluído com sucesso!${X}"
+    echo -e "${R}---------------------------------------------------${X}"
+}
 
-	if [[ "$old" = "$new" ]]; then 
-		echo -e "${G}---------${G}--------------------------------------------------"
-		echo -e "${X}OK! YUZU GENERATOR IS PATCHED TO USE THIS CONTROLLER "
-		echo -e "${G}"$id""
-		echo -e "${G}---------${G}--------------------------------------------------"
-		echo
-		echo -e "${X} "
-		echo
-		exit 0
-	fi
-
-	if [[ "$replace" != "$with" ]]; then 
-
-		sed -i "s/^.*inputguid = controller.guid/                inputguid = \"$id\"/g" /userdata/system/switch/configgen/generators/yuzu/yuzuMainlineGenerator.py
-
-		echo -e "${X}---------${X}--------------------------------------------------"
-		echo -e "${X}---------${X}--------------------------------------------------"
-		echo
-		echo -e "${G}OK! YUZU GENERATOR IS PATCHED ${X}"
-		echo 
-		echo -e "${X}REPLACED ${X}"
-		echo -e "inputguid = $replaced"
-		echo
-		echo -e "${X}WITH ${X}"
-		echo -e "inputguid = \"$id\""
-		echo
-		echo -e "${X}---------${X}--------------------------------------------------"
-		echo -e "${X}---------${X}--------------------------------------------------"
-		echo
-		echo -e "${X} "
-		echo
-		exit 0
-	fi
-
-fi
-
+# Executar função principal
+main "$@"

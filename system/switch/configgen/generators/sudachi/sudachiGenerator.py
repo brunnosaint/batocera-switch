@@ -3,15 +3,10 @@ import generators
 from configgen.generators.Generator import Generator
 from configgen import Command as Command
 import os
-import stat
-import json
-import uuid
-from os import path
-from os import environ
 import shutil
-
+import stat
 import batoceraFiles
-import controllersConfig as controllersConfig
+import configgen.controller as controllersConfig
 import configparser
 import logging
 from shutil import copyfile
@@ -40,7 +35,10 @@ class SudachiGenerator(Generator):
         if os.path.exists("/userdata/system/switch/sudachi.AppImage"):
             st = os.stat("/userdata/system/switch/sudachi.AppImage")
             os.chmod("/userdata/system/switch/sudachi.AppImage", st.st_mode | stat.S_IEXEC)
-
+        if os.path.exists("/userdata/system/switch/extra/sudachilaunch.AppImage"):
+            st = os.stat("/userdata/system/switch/extra/sudachilaunch.AppImage")
+            os.chmod("/userdata/system/switch/extra/sudachilaunch.AppImage", st.st_mode | stat.S_IEXEC)
+            
             #chmod sudachi app
             st = os.stat("/userdata/system/switch/extra/batocera-config-sudachi")
             os.chmod("/userdata/system/switch/extra/batocera-config-sudachi", st.st_mode | stat.S_IEXEC)
@@ -50,12 +48,54 @@ class SudachiGenerator(Generator):
         if not os.path.exists("/lib/libthai.so.0"):
             st = os.symlink("/lib/libthai.so.0.3.1","/lib/libthai.so.0")
 
-        #Create Keys Folder
+        #Create oldyuzu Folder needed by citron/sudachi
         if not os.path.exists(batoceraFiles.CONF + "/yuzu"):
             os.mkdir(batoceraFiles.CONF + "/yuzu")
 
         if not os.path.exists(batoceraFiles.CONF + "/yuzu/keys"):
             os.mkdir(batoceraFiles.CONF + "/yuzu/keys")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/amiibo"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/amiibo")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/crash_dumps"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/crash_dumps")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/custom"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/custom")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/dump"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/dump")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/game_list"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/game_list")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/icons"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/icons")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/load"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/load")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/log"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/log")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/nand"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/nand")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/play_time"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/play_time")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/screenshots"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/screenshots")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/sdmc"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/sdmc")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/shader"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/shader")
+
+        if not os.path.exists(batoceraFiles.CONF + "/yuzu/tas"):
+            os.mkdir(batoceraFiles.CONF + "/yuzu/tas")
 
         #Create OS Saves folder
         if not os.path.exists(batoceraFiles.SAVES + "/yuzu"):
@@ -146,14 +186,14 @@ class SudachiGenerator(Generator):
         
         SudachiGenerator.writeYuzuConfig(yuzuConfig,beforeyuzuConfig, system, playersControllers)
         if system.config['emulator'] == 'sudachi':
-            commandArray = ["padsp", "/userdata/system/switch/sudachi.AppImage", "-f",  "-g", rom ]
+            commandArray = ["padsp", "/userdata/system/switch/extra/sudachilaunch.AppImage", "-f",  "-g", rom ]
                       # "XDG_DATA_HOME":yuzuSaves, , "XDG_CACHE_HOME":batoceraFiles.CACHE, "XDG_CONFIG_HOME":yuzuHome,
         return Command.Command(
             array=commandArray,
             env={"XDG_DATA_HOME":"/userdata/system/configs",
                  "XDG_CONFIG_HOME":"/userdata/system/configs",
                  "XDG_CACHE_HOME":"/userdata/system/configs",
-                 "SDL_GAMECONTROLLERCONFIG": controllersConfig.generateSdlGameControllerConfig(playersControllers),
+                 "SDL_GAMECONTROLLERCONFIG": controllersConfig.generate_sdl_game_controller_config(playersControllers),
                  "DRI_PRIME":"1", 
                  "AMD_VULKAN_ICD":"RADV",
                  "DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1":"1",
@@ -267,14 +307,14 @@ class SudachiGenerator(Generator):
         yuzuConfig.set("UI", "Screenshots\\screenshot_path", "/userdata/screenshots")
         yuzuConfig.set("UI", "Screenshots\\screenshot_path\\default", "false")
 
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20sudachi\Controller_KeySeq", "Minus+Plus")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20sudachi\Controller_KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\KeySeq", "F4")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq", "Minus+B")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq", "Home+ZL")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20sudachi\Controller_KeySeq", "Minus+Plus")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20sudachi\Controller_KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\KeySeq", "F4")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq", "Minus+B")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq", "Home+ZL")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq\\default", "false")
 
     # Data Storage section
         if not yuzuConfig.has_section("Data%20Storage"):
@@ -516,8 +556,8 @@ class SudachiGenerator(Generator):
             
             if debugcontrollers:
                 eslog.debug("=====================================================Start Bato Controller Debug Info=========================================================")
-                for index in playersControllers :
-                    controller = playersControllers[index]
+                for index, controller in enumerate(playersControllers):
+
                     eslog.debug("Controller configName: {}".format(controller.configName))
                     eslog.debug("Controller index: {}".format(controller.index))
                     eslog.debug("Controller realName: {}".format(controller.realName))                
@@ -753,9 +793,7 @@ class SudachiGenerator(Generator):
 
             cguid = [0 for x in range(10)]
             lastplayer = 0
-            for index in playersControllers :
-                controller = playersControllers[index]
-
+            for index, controller in enumerate(playersControllers):
 
                 if(controller.guid != "050000007e0500000620000001800000" and controller.guid != "050000007e0500000720000001800000"):
                     #don't run the code for Joy-Con (L) or Joy-Con (R) - Batocera adds these and only works with a pair
@@ -771,11 +809,11 @@ class SudachiGenerator(Generator):
                         eslog.debug("Which Pad: {}".format(which_pad))
 
 
-                    if(playersControllers[index].realName == 'Nintendo Switch Combined Joy-Cons'):  #works in Batocera v37
+                    if(playersControllers[index].real_name == 'Nintendo Switch Combined Joy-Cons'):  #works in Batocera v37
                         outputpath = "nintendo_joycons_combined"
                         sdl_mapping = next((item for item in sdl_devices if (item["path"] == outputpath or item["path"] == '/devices/virtual')),None)
                     else:
-                        command = "udevadm info --query=path --name=" + playersControllers[index].dev
+                        command = "udevadm info --query=path --name=" + controller.device_path
                         outputpath = ((subprocess.check_output(command, shell=True)).decode()).partition('/input/')[0]
                         sdl_mapping = next((item for item in sdl_devices if item["path"] == outputpath),None)
 
@@ -1550,7 +1588,7 @@ class SudachiGenerator(Generator):
 
 
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_connected", "false")
-                yuzuConfig.set("Controls", "player_" + controllernumber + "_connected\default", "true")
+                yuzuConfig.set("Controls", "player_" + controllernumber + "_connected\\default", "true")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_type", "0")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_type\\default", "true")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_vibration_enabled", "true")

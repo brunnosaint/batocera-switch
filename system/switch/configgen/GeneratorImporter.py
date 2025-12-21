@@ -8,13 +8,12 @@ if TYPE_CHECKING:
 # not the nicest way, possibly one of the faster i think
 # some naming rules may allow to modify this function to less than 10 lines
 
-def getGenerator(emulator: str) -> Generator:
+def get_generator(emulator: str) -> Generator:
 
     if emulator == 'eden':
         from generators.eden.edenGenerator import EdenGenerator
         return EdenGenerator()
-
-    if emulator == 'citron':
+    if emulator == 'citron-emu':
         from generators.citron.citronGenerator import CitronGenerator
         return CitronGenerator()
 
@@ -22,19 +21,11 @@ def getGenerator(emulator: str) -> Generator:
         from generators.sudachi.sudachiGenerator import SudachiGenerator
         return SudachiGenerator()
 
-    if emulator == 'yuzu-early-access':
+    if emulator == 'yuzu-ea':
         from generators.yuzu.yuzuMainlineGenerator import YuzuMainlineGenerator
         return YuzuMainlineGenerator()
 
-    if emulator == 'ryujinx':
-        from generators.ryujinx.ryujinxMainlineGenerator import RyujinxMainlineGenerator
-        return RyujinxMainlineGenerator()
-
-    if emulator == 'ryujinx-continuous':
-        from generators.ryujinx.ryujinxMainlineGenerator import RyujinxMainlineGenerator
-        return RyujinxMainlineGenerator()
-
-    if emulator == 'ryujinx-avalonia':
+    if emulator == 'ryujinx-greem':
         from generators.ryujinx.ryujinxMainlineGenerator import RyujinxMainlineGenerator
         return RyujinxMainlineGenerator()
 

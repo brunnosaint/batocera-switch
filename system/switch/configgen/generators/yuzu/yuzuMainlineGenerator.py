@@ -4,13 +4,9 @@ from configgen.generators.Generator import Generator
 from configgen import Command as Command
 import os
 import stat
-import json
-import uuid
-from os import path
-from os import environ
 import shutil
 import batoceraFiles
-import controllersConfig as controllersConfig
+import configgen.controller as controllersConfig
 import configparser
 import logging
 from shutil import copyfile
@@ -30,19 +26,22 @@ class YuzuMainlineGenerator(Generator):
 
     def getHotkeysContext(self) -> HotkeysContext:
         return {
-            "name": "yuzu-early-access",
+            "name": "yuzu-ea",
             "keys": { "exit": ["KEY_LEFTALT", "KEY_F4"] }
         }
 
     def generate(self, system, rom, playersControllers, metadata, guns, wheels, gameResolution):
-        #handles chmod so you just need to download yuzu.AppImage
-        if os.path.exists("/userdata/system/switch/yuzu.AppImage"):
-            st = os.stat("/userdata/system/switch/yuzu.AppImage")
-            os.chmod("/userdata/system/switch/yuzu.AppImage", st.st_mode | stat.S_IEXEC)
+        #handles chmod
+        if os.path.exists("/userdata/system/switch/extra/yuzuealaunch.AppImage"):
+            st = os.stat("/userdata/system/switch/extra/yuzuealaunch.AppImage")
+            os.chmod("/userdata/system/switch/extra/yuzuealaunch.AppImage", st.st_mode | stat.S_IEXEC)
 
         if os.path.exists("/userdata/system/switch/yuzuEA.AppImage"):
             st = os.stat("/userdata/system/switch/yuzuEA.AppImage")
             os.chmod("/userdata/system/switch/yuzuEA.AppImage", st.st_mode | stat.S_IEXEC)
+            #chmod yuzuea app
+            st = os.stat("/userdata/system/switch/extra/batocera-config-yuzuEA")
+            os.chmod("/userdata/system/switch/extra/batocera-config-yuzuEA", st.st_mode | stat.S_IEXEC)
 
         if not os.path.exists("/lib/libthai.so.0.3.1"):
             copyfile("/userdata/system/switch/extra/libthai.so.0.3.1", "/lib/libthai.so.0.3.1")
@@ -106,14 +105,29 @@ class YuzuMainlineGenerator(Generator):
         beforeyuzuConfig = batoceraFiles.CONF + '/yuzu/before-qt-config.ini'
         
         YuzuMainlineGenerator.writeYuzuConfig(yuzuConfig,beforeyuzuConfig, system, playersControllers)
-        if system.config['emulator'] == 'yuzu-early-access':
-            commandArray = ["/userdata/system/switch/yuzuEA.AppImage", "-f", "-g", rom ]
+        if system.config['emulator'] == 'yuzu-ea':
+            commandArray = ["/userdata/system/switch/extra/yuzuEAlaunch.AppImage", "-f", "-g", rom ]
         else:
             commandArray = ["/userdata/system/switch/yuzu.AppImage", "-f",  "-g", rom ]
                       # "XDG_DATA_HOME":yuzuSaves, , "XDG_CACHE_HOME":batoceraFiles.CACHE, "XDG_CONFIG_HOME":yuzuHome,
         return Command.Command(
             array=commandArray,
-            env={"QT_QPA_PLATFORM":"xcb","SDL_GAMECONTROLLERCONFIG": controllersConfig.generateSdlGameControllerConfig(playersControllers) }
+            env={"XDG_DATA_HOME":"/userdata/system/configs",
+                 "XDG_CONFIG_HOME":"/userdata/system/configs",
+                 "XDG_CACHE_HOME":"/userdata/system/configs",
+                 "SDL_GAMECONTROLLERCONFIG": controllersConfig.generate_sdl_game_controller_config(playersControllers),
+                 "DRI_PRIME":"1", 
+                 "AMD_VULKAN_ICD":"RADV",
+                 "DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1":"1",
+                 "QT_XKB_CONFIG_ROOT":"/usr/share/X11/xkb",
+                 "NO_AT_BRIDGE":"1",
+                 "XDG_MENU_PREFIX":"batocera-",
+                 "XDG_CONFIG_DIRS":"/etc/xdg",
+                 "XDG_CURRENT_DESKTOP":"XFCE",
+                 "DESKTOP_SESSION":"XFCE",
+                 "QT_FONT_DPI":"96",
+                 "QT_SCALE_FACTOR":"1",
+                 "GDK_SCALE":"1"}
             )
 
 
@@ -217,18 +231,18 @@ class YuzuMainlineGenerator(Generator):
         yuzuConfig.set("UI", "Screenshots\\screenshot_path\\default", "false")
 
 
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20yuzu\Controller_KeySeq", "Minus+Plus")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20yuzu\Controller_KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\KeySeq", "F4")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq", "Minus+B")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq", "Home+ZL")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\KeySeq", "Esc")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Exit%20Fullscreen\KeySeq\\default", "false")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Continue\Pause%20Emulation\KeySeq", "P")
-        yuzuConfig.set("UI", "Shortcuts\Main%20Window\Continue\Pause%20Emulation\KeySeq\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20yuzu\Controller_KeySeq", "Minus+Plus")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20yuzu\Controller_KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\KeySeq", "F4")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq", "Minus+B")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Fullscreen\Controller_KeySeq\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq", "Home+ZL")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\Controller_KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\KeySeq", "Esc")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Exit%20Fullscreen\KeySeq\\default", "false")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Continue\Pause%20Emulation\KeySeq", "P")
+        yuzuConfig.set("UI", r"Shortcuts\Main%20Window\Continue\Pause%20Emulation\KeySeq\default", "false")
 
 
     # Data Storage section
@@ -471,8 +485,8 @@ class YuzuMainlineGenerator(Generator):
             
             if debugcontrollers:
                 eslog.debug("=====================================================Start Bato Controller Debug Info=========================================================")
-                for index in playersControllers :
-                    controller = playersControllers[index]
+                for controller in playersControllers:
+
                     eslog.debug("Controller configName: {}".format(controller.configName))
                     eslog.debug("Controller index: {}".format(controller.index))
                     eslog.debug("Controller realName: {}".format(controller.realName))                
@@ -708,12 +722,9 @@ class YuzuMainlineGenerator(Generator):
 
             cguid = [0 for x in range(10)]
             lastplayer = 0
-            for index in playersControllers :
-                controller = playersControllers[index]
-
+            for index, controller in enumerate(playersControllers):
 
                 if(controller.guid != "050000007e0500000620000001800000" and controller.guid != "050000007e0500000720000001800000"):
-                    #don't run the code for Joy-Con (L) or Joy-Con (R) - Batocera adds these and only works with a pair
                     which_pad = "p" + str(lastplayer+1) + "_pad"
 
                     if debugcontrollers:
@@ -726,11 +737,11 @@ class YuzuMainlineGenerator(Generator):
                         eslog.debug("Which Pad: {}".format(which_pad))
 
 
-                    if(playersControllers[index].realName == 'Nintendo Switch Combined Joy-Cons'):  #works in Batocera v37
+                    if(playersControllers[index].real_name == 'Nintendo Switch Combined Joy-Cons'):  #works in Batocera v37
                         outputpath = "nintendo_joycons_combined"
                         sdl_mapping = next((item for item in sdl_devices if (item["path"] == outputpath or item["path"] == '/devices/virtual')),None)
                     else:
-                        command = "udevadm info --query=path --name=" + playersControllers[index].dev
+                        command = "udevadm info --query=path --name=" + controller.device_path
                         outputpath = ((subprocess.check_output(command, shell=True)).decode()).partition('/input/')[0]
                         sdl_mapping = next((item for item in sdl_devices if item["path"] == outputpath),None)
 
@@ -1505,7 +1516,7 @@ class YuzuMainlineGenerator(Generator):
 
 
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_connected", "false")
-                yuzuConfig.set("Controls", "player_" + controllernumber + "_connected\default", "true")
+                yuzuConfig.set("Controls", "player_" + controllernumber + "_connected\\default", "true")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_type", "0")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_type\\default", "true")
                 yuzuConfig.set("Controls", "player_" + controllernumber + "_vibration_enabled", "true")
